@@ -24,6 +24,29 @@ class GoogleMap extends React.Component {
         this.showIW(index);
     }
 
+    componentDidUpdate() {
+        const { filteredProperties, isFiltering } = this.props;
+        const { markers } = this.state;
+
+        markers.forEach(marker => {
+            const { property } = marker;
+
+            if (isFiltering) {
+                //show markers of filtered properties
+                if (filteredProperties.includes(property)) {
+                    markers[property.index].setVisible(true);
+                } else {
+                    markers[property.index].setVisible(false);
+                }
+                //hide all other markers
+
+            } else {
+                //show all markers
+                markers[property.index].setVisible(true);
+            }
+        })
+    }
+
     showIW(index) {
         const { markers } = this.state;
         markers[index] && markers[index].iw.open(this.map, markers[index]);
@@ -70,7 +93,8 @@ class GoogleMap extends React.Component {
                     size: new google.maps.Size(22, 55),
                     origin: new google.maps.Point(0, -15),
                     anchor: new google.maps.Point(11, 52)
-                }
+                },
+                property
             });
 
             const iw = new google.maps.InfoWindow({
@@ -105,7 +129,10 @@ class GoogleMap extends React.Component {
 
 GoogleMap.propTypes = {
     properties: PropTypes.array.isRequired,
-    setActiveProperty: PropTypes.func.isRequired
+    setActiveProperty: PropTypes.func.isRequired,
+    activeProperty: PropTypes.object.isRequired,
+    filteredProperties: PropTypes.array,
+    isFiltering: PropTypes.bool.isRequired
 };
 
 export default GoogleMap;
