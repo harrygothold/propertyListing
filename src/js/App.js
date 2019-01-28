@@ -5,6 +5,7 @@ import GoogleMap from './GoogleMap';
 import data from './data/Data';
 import jump from 'jump.js';
 import { easeInOutCubic } from './utils/Easing'
+import image from '../images/location-map.svg';
 
 class App extends React.Component {
 
@@ -13,11 +14,14 @@ class App extends React.Component {
 
     this.state = {
       properties: data.properties,
-      activeProperty: data.properties[10],
+      activeProperty: data.properties[0],
       filterIsVisible: false,
       filterBedrooms: 'any',
       filterBathrooms: 'any',
       filterCars: 'any',
+      filterSort: 'any',
+      priceFrom: 500000,
+      priceTo: 1000000,
       filteredProperties: [],
       isFiltering: false
     }
@@ -43,22 +47,35 @@ class App extends React.Component {
   }
 
   filterProperties() {
-    const { properties, filterBedrooms, filterBathrooms, filterCars } = this.state;
-    const isFiltering = filterBedrooms !== 'any' || filterBathrooms !== 'any' || filterCars !== 'any';
+    const { properties, filterBedrooms, filterBathrooms, filterCars, filterSort, priceTo, priceFrom } = this.state;
+    const isFiltering = filterBedrooms !== 'any' || filterBathrooms !== 'any' || filterCars !== 'any' || filterSort !== 'any' ||
+      priceFrom !== '0' || priceTo !== 1000001;
     //console.log(isFiltering + filterBedrooms);
 
     const getFilteredProperties = (properties) => {
 
       const filteredProperties = [];
       properties.map(property => {
-        const { bedrooms, bathrooms, carSpaces } = property;
+        const { bedrooms, bathrooms, carSpaces, price } = property;
         const match = (bedrooms === parseInt(filterBedrooms) || filterBedrooms === 'any') &&
           (bathrooms === parseInt(filterBathrooms) || filterBathrooms === 'any') &&
-          (carSpaces === parseInt(filterCars) || filterCars === 'any');
+          (carSpaces === parseInt(filterCars) || filterCars === 'any') &&
+          (price >= priceFrom && price <= priceTo);
 
         // if the match is true push this property to filteredProperties
         match && filteredProperties.push(property);
       })
+
+      // parseInt(filterSort) === 0 && propertiesList.sort((a, b) => a.price - b.price);
+      // parseInt(filterSort) === 1 && propertiesList.sort((a, b) => b.price - a.price);
+      switch (filterSort) {
+        case '0':
+          filteredProperties.sort((a, b) => a.price - b.price);
+          break;
+        case '1':
+          filteredProperties.sort((a, b) => b.price - a.price);
+          break;
+      }
 
       return filteredProperties;
 
@@ -66,7 +83,7 @@ class App extends React.Component {
 
     this.setState({
       filteredProperties: getFilteredProperties(properties),
-      activeProperty: getFilteredProperties(properties)[0],
+      activeProperty: getFilteredProperties(properties)[0] || properties[0],
       isFiltering
     })
   }
@@ -81,10 +98,14 @@ class App extends React.Component {
   clearFilter(e, form) {
     e.preventDefault();
     this.setState({
+      properties: this.state.properties.sort((a, b) => a.index - b.index),
       filterBedrooms: 'any',
       filterBathrooms: 'any',
       filterCars: 'any',
+      filterSort: 'any',
       filteredProperties: [],
+      priceFrom: 500000,
+      priceTo: 1000000,
       isFiltering: false,
       activeProperty: this.state.properties[0]
     })
@@ -111,8 +132,12 @@ class App extends React.Component {
   }
 
   render() {
-    const { properties, activeProperty, filterIsVisible, filteredProperties, isFiltering } = this.state;
+    const { properties, activeProperty, filterIsVisible, filteredProperties, isFiltering, filterSort } = this.state;
     const propertiesList = isFiltering ? filteredProperties : properties;
+
+
+
+
     return (
       <div>
         {/* listings - Start */}
@@ -126,7 +151,7 @@ class App extends React.Component {
           />
 
           <div className="cards container">
-            <div className="cards-list row ">
+            <div className={`cards-list row  ${propertiesList.length === 0 ? 'is-empty' : ''}`}>
 
               {
                 propertiesList.map(property => {
@@ -137,6 +162,9 @@ class App extends React.Component {
                     setActiveProperty={this.setActiveProperty}
                   />
                 })
+              }
+              {
+                (isFiltering && propertiesList.length === 0) && <p className='warning'><img src={image} /><br />No Properties were found</p>
               }
 
             </div>
